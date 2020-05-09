@@ -6,7 +6,7 @@ export function typeInputForm(dataSet) {
 
 export function selectRadioForm(dataSet) {
   for (let {selector,data} of dataSet) {
-    cy.get(`${selector}[value="${data}"]`).select()
+    cy.get(`${selector}[value="${data}"]`).click()
   }
 }
 
