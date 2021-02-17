@@ -2,7 +2,8 @@ import {
   typeInputForm,
   selectRadioForm,
   typeTextareaForm,
-} from "./typeFormBundle";
+  isExist,
+} from "./util";
 
 const selectors = {
   inputTitle: 'input[name="title"]',
@@ -12,28 +13,31 @@ const selectors = {
   backBtn: "#back-btn",
 };
 
+
+
+const inputDataSet = [
+  {
+    selector: selectors.inputTitle,
+    data: "리뷰 제목 테스트",
+  },
+];
+const radioInputDataSet = [
+  {
+    selector: selectors.inputRank,
+    data: '3',
+  },
+];
+const textareaDataSet = [
+  {
+    selector: selectors.textareaContent,
+    data: 
+    `이건 내용인데, 개행문자가 그대로 출력되는지를
+    확인해 보기 위한 과정인데, 아마 자동 인덴팅이 있어서 
+    좀 그래보이네...
+    `,
+  },
+];
 describe("데이터 생성, CREATE", function () {
-  const inputDataSet = [
-    {
-      selector: selectors.inputTitle,
-      data: "리뷰 제목 테스트",
-    },
-  ];
-  const radioInputDataSet = [
-    {
-      selector: selectors.inputRank,
-      data: 3,
-    },
-  ];
-  const textareaDataSet = [
-    {
-      selector: selectors.textareaContent,
-      data: `이건 내용인데, 개행문자가 그대로 출력되는지를
-      확인해 보기 위한 과정인데, 아마 자동 인덴팅이 있어서 
-      좀 그래보이네...
-      `,
-    },
-  ];
   function inputAlldata() {
     typeInputForm(inputDataSet);
     selectRadioForm(radioInputDataSet);
@@ -43,11 +47,7 @@ describe("데이터 생성, CREATE", function () {
     before(() => {
       cy.visit("/create");
     });
-    function isExist(desc, selector) {
-      it(desc, () => {
-        cy.get(selector);
-      });
-    }
+    
     it("네비게이션 존재 여부", () => {
       cy.get("#home").should("have.attr", "href", "/community/");
       cy.get("#create").should("have.attr", "href", "/community/create/");
@@ -91,4 +91,65 @@ describe("데이터 생성, CREATE", function () {
       cy.get(selectors.inputTitle).type(over100Title).should('have.value',over100Title.slice(0,100));
     });
   });
+  it('입력 후 디테일 페이지 이동 테스트',()=>{
+    cy.visit('/create')
+    inputAlldata()
+    cy.get("#submit-btn").click()
+    cy.get('#title').should('have.text',inputDataSet[0].data)
+    cy.get('#content').should('have.text',textareaDataSet[0].data.trim())
+    cy.get('#rank').should('have.text',radioInputDataSet[0].data)
+  })
 });
+
+describe('전체 리뷰 조회 페이지',()=>{
+  describe('존재 여부',()=>{
+    before(() => {
+      cy.visit("/");
+    });
+    
+    it("네비게이션 존재 여부", () => {
+      cy.get("#home").should("have.attr", "href", "/community/");
+      cy.get("#create").should("have.attr", "href", "/community/create/");
+    });
+
+    isExist('타이틀 링크', '.title')
+  })
+  
+  describe('기능 테스트',()=>{
+    it('메인 페이지의 타이틀과 디테일 페이지의 타이틀이 같은가요?',()=>{
+      cy.visit('/')
+      cy.get('.title').first().invoke('text').then(title=>{
+        cy.get('.title').first().click()
+        cy.get('#title').should('have.text',title)
+      })
+    })
+    it('create 테스트에서 작성한 타이틀이 리스트에 있나요?',()=>{
+      cy.visit('/')
+      cy.get('.title').contains(inputDataSet[0].data)
+    })
+  })
+})
+
+describe('디테일 페이지',()=>{
+  describe('존재 여부',()=>{
+    before(() => {
+      cy.visit("/1");
+    });
+    
+    it("네비게이션 존재 여부", () => {
+      cy.get("#home").should("have.attr", "href", "/community/");
+      cy.get("#create").should("have.attr", "href", "/community/create/");
+    });
+
+    isExist('타이틀','#title')
+    isExist('랭크','#rank')
+    isExist('컨텐트','#content')
+  })
+  describe('404 test',()=>{
+    it('1000번 째 글로 접속해서 404 check',()=>{
+      cy.request({url:'/1000',failOnStatusCode:false}).then(res=>{
+        expect(res.status).to.eq(404)
+      })
+    })
+  })
+})

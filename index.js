@@ -5,16 +5,19 @@ const app = express()
 
 app.use(cors())
 
-app.get('/', (req, res) => {
+app.get('/:toTest', (req, res) => {
   let baseUrl = req.query.baseUrl
   if (baseUrl.endsWith('/')) {
     baseUrl = baseUrl.slice(0, -1)
   }
   cypress
     .run({
-      spec: './cypress/integration/django-pjt2.spec.js',
+      spec: './cypress/integration/pjt_0408/index.spec.js',
       config: {
         baseUrl,
+      },
+      env:{
+        toTest:req.params.toTest,
       }
     })
     .then((result) => {
